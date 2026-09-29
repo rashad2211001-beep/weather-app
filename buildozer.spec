@@ -1,3 +1,4 @@
+
 [app]
 title = Weather
 package.name = weather
@@ -7,7 +8,7 @@ source.dir = .
 source.include_exts = py,png,jpg,kv,atlas
 version = 1.0
 
-requirements = python3,kivy,requests,pyjnius,android,urllib3,chardet,idna,certifi
+requirements = python3,kivy==2.3.0,requests==2.31.0,urllib3==2.1.0,chardet==5.2.0,idna==3.6,certifi==2024.2.2,charset-normalizer==3.3.2,pyjnius,android
 
 orientation = portrait
 fullscreen = 0
