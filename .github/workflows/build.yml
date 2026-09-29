@@ -1,24 +1,55 @@
 name: Build APK
-
 on:
   push:
-    branches: [ main ]
   workflow_dispatch:
 
 jobs:
-  build-android:
-    runs-on: ubuntu-latest
-    container:
-      image: kivy/buildozer:latest
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build with Buildozer
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
         run: |
-          buildozer android debug
+          sudo apt update
+          sudo apt install -y git zip unzip openjdk-17-jdk \
+            autoconf libtool pkg-config zlib1g-dev \
+            libncurses5-dev libncursesw5-dev libtinfo6 \
+            cmake libffi-dev libssl-dev automake
+
+      - name: Setup Java 17
+        run: |
+          sudo update-alternatives --set java /usr/lib/jvm/java-17-openjdk-amd64/bin/java
+
+      - name: Install buildozer
+        run: |
+          pip install --upgrade pip
+          pip install buildozer "cython<3.0"
+
+      - name: Pre-accept SDK licenses
+        run: |
+          mkdir -p $HOME/.buildozer/android/platform
+          mkdir -p $HOME/.android
+          echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" > $HOME/.android/android-sdk-license
+          echo "d56f5187479451eabf01fb78af6dfcb131a6481e" >> $HOME/.android/android-sdk-license
+          echo "84831b9409646a918e30573bab4c9c91346d8abd" > $HOME/.android/android-sdk-preview-license
+
+      - name: Build APK
+        env:
+          ANDROID_ACCEPT_SDK_LICENSE: "1"
+        run: |
+          export CI=true
+          yes | buildozer -v android debug 2>&1 | tail -300
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: apk
           path: bin/*.apk
+          if-no-files-found: warn
